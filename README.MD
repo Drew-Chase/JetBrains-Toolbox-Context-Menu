@@ -11,3 +11,6 @@ cd C:\path\to\executable\
 ```
 
 Note that you must replace `C:\path\to\executable\` with the actual path to the executable.
+
+## Screenshot
+![img.png](img.png)
