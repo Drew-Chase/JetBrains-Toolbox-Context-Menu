@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="LocationsWithSilentDeleteHolder">
+    <option name="locations">
+      <list>
+        <option value="$PROJECT_DIR$/publish/self-contained" />
+        <option value="$PROJECT_DIR$/publish/net8.0" />
+      </list>
+    </option>
+  </component>
+</project>
