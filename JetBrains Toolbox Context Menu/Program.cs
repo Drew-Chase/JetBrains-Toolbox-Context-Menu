@@ -13,12 +13,23 @@ public record Tool(string ChannelId, string ToolId, string ProductCode, string T
 [SupportedOSPlatform("Windows")]
 internal static class Program
 {
+    /// <summary>
+    /// Retrieves the path to the JetBrains Toolbox installation.
+    /// </summary>
+    /// <returns>
+    /// The path to the JetBrains Toolbox installation if found, otherwise null.
+    /// </returns>
     private static string? GetJetBrainsToolboxPath()
     {
         RegistryKey? registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\JetBrains\Toolbox");
         return registryKey?.GetValue(null)?.ToString();
     }
 
+    /// <summary>
+    /// Retrieves the list of tools from the state file.
+    /// </summary>
+    /// <param name="stateFilePath">The path to the state file.</param>
+    /// <returns>An array of Tool objects representing the tools.</returns>
     private static Tool[] GetTools(string stateFilePath)
     {
         string json = File.ReadAllText(stateFilePath);
@@ -27,6 +38,11 @@ internal static class Program
         return JObject.Parse(json)["tools"]?.ToObject<Tool[]>() ?? Array.Empty<Tool>();
     }
 
+    /// <summary>
+    /// Creates a context menu item for JetBrains Toolbox in the Windows Explorer.
+    /// </summary>
+    /// <param name="toolboxPath">The path to the JetBrains Toolbox executable file.</param>
+    /// <param name="tools">An array of Tool objects representing the available tools in JetBrains Toolbox.</param>
     private static void CreateContextMenu(string toolboxPath, Tool[] tools)
     {
         Console.ForegroundColor = ConsoleColor.Green;
@@ -52,6 +68,11 @@ internal static class Program
         }
     }
 
+    /// <summary>
+    /// Creates a context menu item for JetBrains Toolbox.
+    /// </summary>
+    /// <param name="key">The registry key where the context menu item will be created.</param>
+    /// <param name="tools">The tools to be added to the context menu.</param>
     private static void CreateContextMenuItem(RegistryKey key, IEnumerable<Tool> tools)
     {
         using var registryKey = key.CreateSubKey("shell");
@@ -59,11 +80,17 @@ internal static class Program
         foreach (var tool in tools)
         {
             string exePath = Path.Combine(tool.InstallLocation, tool.LaunchCommand);
-            using var subKey = registryKey.CreateSubKey(tool.DisplayName);
-            subKey.SetValue("MUIVerb", tool.DisplayName);
-            subKey.SetValue("Icon", $"\"{exePath}\"");
-            subKey.SetValue("Command", $"\"{exePath}\" \"%V\"");
-            Console.WriteLine($"\t- {tool.DisplayName}");
+            using (var subKey = registryKey.CreateSubKey(tool.DisplayName))
+            {
+                subKey.SetValue("MUIVerb", tool.DisplayName);
+                subKey.SetValue("Icon", $"\"{exePath}\"");
+            }
+
+            using (var subKey = registryKey.CreateSubKey($"{tool.DisplayName}\\command"))
+            {
+                subKey.SetValue("", $"\"{exePath}\" \"%V\"");
+                Console.WriteLine($"\t- {tool.DisplayName}");
+            }
         }
     }
 
