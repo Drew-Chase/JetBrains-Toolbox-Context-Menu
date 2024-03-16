@@ -131,5 +131,11 @@ internal static class Program
         CreateContextMenu(jetBrainsToolboxExecutablePath, tools);
 
         Console.WriteLine("Done!");
+
+        // pause at the end
+        Console.ResetColor();
+        Console.Write("Press any key to continue . . .");
+        Console.ReadKey();
+
     }
 }
