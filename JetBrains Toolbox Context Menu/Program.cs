@@ -33,9 +33,9 @@ internal static class Program
     private static Tool[] GetTools(string stateFilePath)
     {
         string json = File.ReadAllText(stateFilePath);
-        var state = JsonSerializer.Deserialize<object>(json);
-        if (state is null) return Array.Empty<Tool>();
-        return JObject.Parse(json)["tools"]?.ToObject<Tool[]>() ?? Array.Empty<Tool>();
+        object? state = JsonSerializer.Deserialize<object>(json);
+        if (state is null) return [];
+        return JObject.Parse(json)["tools"]?.ToObject<Tool[]>() ?? [];
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ internal static class Program
     {
         using var registryKey = key.CreateSubKey("shell");
         Console.ForegroundColor = ConsoleColor.Yellow;
-        foreach (var tool in tools)
+        foreach (Tool tool in tools)
         {
             string exePath = Path.Combine(tool.InstallLocation, tool.LaunchCommand);
             using (var subKey = registryKey.CreateSubKey(tool.DisplayName))
@@ -92,6 +92,12 @@ internal static class Program
                 Console.WriteLine($"\t- {tool.DisplayName}");
             }
         }
+    }
+
+    private static void RemoveExisingContextMenu()
+    {
+        Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\Directory\Background\shell\JetBrainsToolbox", false);
+        Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\Directory\shell\JetBrainsToolbox", false);
     }
 
     private static void Main()
@@ -126,7 +132,10 @@ internal static class Program
             return;
         }
 
-        var tools = GetTools(stateFilePath);
+        Console.WriteLine("Removing existing context menu items, if any...");
+        RemoveExisingContextMenu();
+
+        Tool[] tools = GetTools(stateFilePath);
 
         CreateContextMenu(jetBrainsToolboxExecutablePath, tools);
 
@@ -136,6 +145,5 @@ internal static class Program
         Console.ResetColor();
         Console.Write("Press any key to continue . . .");
         Console.ReadKey();
-
     }
 }
