@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 namespace JetBrains_Toolbox_Context_Menu;
 
 /// <summary>
-/// Represents a tool in the JetBrains Toolbox context menu.
+///     Represents a tool in the JetBrains Toolbox context menu.
 /// </summary>
 public record Tool(string ChannelId, string ToolId, string ProductCode, string Tag, string DisplayName, string DisplayVersion, string BuildNumber, string InstallLocation, string LaunchCommand);
 
@@ -14,19 +14,19 @@ public record Tool(string ChannelId, string ToolId, string ProductCode, string T
 internal static class Program
 {
     /// <summary>
-    /// Retrieves the path to the JetBrains Toolbox installation.
+    ///     Retrieves the path to the JetBrains Toolbox installation.
     /// </summary>
     /// <returns>
-    /// The path to the JetBrains Toolbox installation if found, otherwise null.
+    ///     The path to the JetBrains Toolbox installation if found, otherwise null.
     /// </returns>
     private static string? GetJetBrainsToolboxPath()
     {
-        RegistryKey? registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\JetBrains\Toolbox");
+        var registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\JetBrains\Toolbox");
         return registryKey?.GetValue(null)?.ToString();
     }
 
     /// <summary>
-    /// Retrieves the list of tools from the state file.
+    ///     Retrieves the list of tools from the state file.
     /// </summary>
     /// <param name="stateFilePath">The path to the state file.</param>
     /// <returns>An array of Tool objects representing the tools.</returns>
@@ -39,7 +39,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// Creates a context menu item for JetBrains Toolbox in the Windows Explorer.
+    ///     Creates a context menu item for JetBrains Toolbox in the Windows Explorer.
     /// </summary>
     /// <param name="toolboxPath">The path to the JetBrains Toolbox executable file.</param>
     /// <param name="tools">An array of Tool objects representing the available tools in JetBrains Toolbox.</param>
@@ -69,7 +69,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// Creates a context menu item for JetBrains Toolbox.
+    ///     Creates a context menu item for JetBrains Toolbox.
     /// </summary>
     /// <param name="key">The registry key where the context menu item will be created.</param>
     /// <param name="tools">The tools to be added to the context menu.</param>
@@ -77,7 +77,7 @@ internal static class Program
     {
         using var registryKey = key.CreateSubKey("shell");
         Console.ForegroundColor = ConsoleColor.Yellow;
-        foreach (Tool tool in tools)
+        foreach (var tool in tools)
         {
             string exePath = Path.Combine(tool.InstallLocation, tool.LaunchCommand);
             using (var subKey = registryKey.CreateSubKey(tool.DisplayName))
