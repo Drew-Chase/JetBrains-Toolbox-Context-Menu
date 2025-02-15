@@ -1,87 +1,88 @@
 use crate::arguments::{JetbrainsToolBoxContextArguments, SubCommands};
+use anyhow::{Context, Result};
 use clap::Parser;
-use log::{debug, error};
-use std::fs;
-use std::path::Path;
-use std::process::exit;
-
+mod arguments;
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 mod darwin;
-
-#[cfg(target_os = "windows")]
-mod windows;
-
-mod arguments;
 #[cfg(target_os = "linux")]
 #[path = "./linux/dolphin.rs"]
 mod dolphin;
 mod toolbox_state;
 mod update;
-
+#[cfg(target_os = "windows")]
+mod windows;
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "error"); // Just in case the parse fails.
+
     let args = JetbrainsToolBoxContextArguments::parse();
+    log::debug!("Parsed command line arguments: {:?}", args);
 
     if args.quiet {
+        log::trace!("Quiet mode enabled; setting logging to error level");
         std::env::set_var("RUST_LOG", "error");
     } else if args.verbose {
+        log::trace!("Verbose mode enabled; setting logging to trace level");
         std::env::set_var("RUST_LOG", "trace");
     } else {
+        log::trace!("Default mode; setting logging to info level");
         std::env::set_var("RUST_LOG", "info");
     }
 
     env_logger::init();
+    log::info!("Logger initialized");
 
     let subcommand = args.subcommands.unwrap_or(SubCommands::Scan);
+    log::info!("Subcommand chosen: {:?}", subcommand);
+
     match subcommand {
         SubCommands::Update(args) => {
+            log::debug!("Entered Update subcommand with args: {:?}", args);
             if args.dry_run {
+                log::info!("Dry-run flag enabled for Update subcommand");
                 if args.all {
-                    update::print_all_releases(args.style).await;
+                    log::debug!("Fetching all releases");
+                    update::print_all_releases(args.style).await?;
                 } else {
-                    update::print_latest_release(args.style).await;
+                    log::debug!("Fetching latest release");
+                    update::print_latest_release(args.style).await?;
                 }
-                return;
+                return Ok(());
             }
         }
         SubCommands::Scan => {
-            scan();
+            log::info!("Entered Scan subcommand");
+            scan()?;
         }
         SubCommands::Uninstall => {
+            log::info!("Entered Uninstall subcommand");
             #[cfg(target_os = "windows")]
-            windows::remove_existing_context_menu();
-        }
-        SubCommands::Install(args) => {
-            let current_exe = std::env::current_exe().unwrap();
-
-            #[cfg(target_os = "windows")]
-            let installed_exe = Path::new(&args.path).join("JetBrainsToolboxContext.exe");
-            #[cfg(any(target_os = "linux", target_os = "macos"))]
-            let installed_exe = Path::new(&args.path).join("JetBrainsToolboxContext");
-
-            if let Err(e) = fs::copy(current_exe, &installed_exe) {
-                error!("Unable to install to path: {:?} - {}", installed_exe, e);
-                exit(1);
+            {
+                log::debug!("Attempting to remove existing context menu entries on Windows");
+                windows::remove_existing_context_menu()
+                    .context("Failed to remove existing context menu entries")?;
             }
-
-            #[cfg(target_os = "windows")]
-            windows::add_self_to_context_menu();
-
-            scan();
-
-            exit(1);
         }
     }
+    Ok(())
 }
-
-fn scan() {
+fn scan() -> Result<()> {
+    log::debug!("Starting scan function");
     #[cfg(any(target_os = "macos", target_os = "ios"))]
-    darwin::scan();
-
+    {
+        log::trace!("Calling Darwin specific scan");
+        darwin::scan();
+    }
     #[cfg(target_os = "windows")]
-    windows::scan();
-
+    {
+        log::trace!("Calling Windows scan");
+        windows::scan().context("Failed to scan for context menu entries on Windows")?;
+    }
     #[cfg(target_os = "linux")]
-    dolphin::initialize();
+    {
+        log::trace!("Calling Linux scan");
+        dolphin::initialize().context("Failed to initialize context menu entries on Linux")?;
+    }
+    log::debug!("Scan function completed");
+    Ok(())
 }
