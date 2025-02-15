@@ -11,9 +11,10 @@ serde = { version = "1.0.215", features = ["derive"] }
 serde_json = { version = "1.0.66" }
 octocrate = { version = "2.0.1", features = ["markdown", "repos"] }
 tokio = { version = "1.41.1", features = ["rt", "rt-multi-thread", "macros"] }
-serde_yaml = "0.9.34+deprecated"
+anyhow = "1.0.95"
+serde_yaml = "0.9.33"
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.52.0"
+winreg = "0.55.0"
 
 [target.'cfg(mac)'.dependencies]
