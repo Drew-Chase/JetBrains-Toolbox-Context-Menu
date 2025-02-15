@@ -27,11 +27,8 @@ pub enum SubCommands {
     #[command(
         about = "Downloads the latest version of JetBrains Toolbox Context Menu from github"
     )]
-    /// Downloads the latest version of JetBrains Toolbox Context Menu from github.
+    /// Downloads the latest version of JetBrains Toolbox Context Menu from GitHub.
     Update(UpdateArguments),
-
-    #[command()]
-    Install(InstallArguments),
 }
 
 #[derive(Debug, Clone, Args)]
