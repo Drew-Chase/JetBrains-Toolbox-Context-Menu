@@ -1,6 +1,10 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use crate::arguments::{JetbrainsToolBoxContextArguments, SubCommands};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
+use log::error;
+
 mod arguments;
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 mod darwin;
@@ -15,6 +19,12 @@ mod windows;
 #[tokio::main]
 async fn main() -> Result<()> {
     std::env::set_var("RUST_LOG", "error"); // Just in case the parse fails.
+    let args: Vec<String> = std::env::args().collect();
+
+    if args.len() > 1 || atty::is(atty::Stream::Stderr) {
+        #[cfg(target_os = "windows")]
+        windows::attach_console();
+    }
 
     let args = JetbrainsToolBoxContextArguments::parse();
     log::debug!("Parsed command line arguments: {:?}", args);
@@ -55,6 +65,10 @@ async fn main() -> Result<()> {
         SubCommands::Scan => {
             log::info!("Entered Scan subcommand");
             scan()?;
+            if args.subcommands.is_none() {
+                #[cfg(target_os = "windows")]
+                windows::show_installed_message();
+            }
         }
         SubCommands::Uninstall => {
             log::info!("Entered Uninstall subcommand");
@@ -63,9 +77,33 @@ async fn main() -> Result<()> {
                 log::debug!("Attempting to remove existing context menu entries on Windows");
                 windows::remove_existing_context_menu()
                     .context("Failed to remove existing context menu entries")?;
+                let current_exe =
+                    std::env::current_exe().context("Failed to get current executable path")?;
+                let uninstall_exe = current_exe
+                    .parent()
+                    .ok_or_else(|| {
+                        anyhow!("Failed to locate parent directory for {:?}", current_exe)
+                    })?
+                    .join("uninstall.exe")
+                    .to_string_lossy()
+                    .to_string();
+                log::debug!("Uninstall executable path: {}", uninstall_exe);
+                if !std::path::Path::new(&uninstall_exe).exists() {
+                    error!("uninstall.exe not found at {}", uninstall_exe);
+                } else {
+                    // Start the uninstall process detached from the current process
+                    let mut command = std::process::Command::new(&uninstall_exe);
+                    command
+                        .spawn()
+                        .context("Failed to start uninstall process in detached mode")?;
+                    log::info!("Uninstall process started");
+                }
             }
         }
     }
+
+    #[cfg(target_os = "windows")]
+    windows::detach_console();
     Ok(())
 }
 fn scan() -> Result<()> {
