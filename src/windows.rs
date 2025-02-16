@@ -121,22 +121,23 @@ pub fn add_self_to_context_menu() -> Result<()> {
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
 
+    // TODO: Add update feature...
     // Add entry for 'update' command
-    if let Ok((key, _)) = hkcu.create_subkey(
-        "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\update\\command",
-    ) {
-        debug!("Creating update command entry");
-        key.set_value("", &format!("\"{}\" -q update", generator_path))
-            .context("Failed to set update command")?;
-    }
-    if let Ok((key, _)) = hkcu.create_subkey(
-        "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\update",
-    ) {
-        key.set_value("MUIVerb", &"Update")
-            .context("Failed to set Update MUIVerb")?;
-        key.set_value("Icon", &format!("\"{}\"", generator_path))
-            .context("Failed to set Update Icon")?;
-    }
+    //    if let Ok((key, _)) = hkcu.create_subkey(
+    //        "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\update\\command",
+    //    ) {
+    //        debug!("Creating update command entry");
+    //        key.set_value("", &format!("\"{}\" -q update", generator_path))
+    //            .context("Failed to set update command")?;
+    //    }
+    //    if let Ok((key, _)) = hkcu.create_subkey(
+    //        "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\update",
+    //    ) {
+    //        key.set_value("MUIVerb", &"Update")
+    //            .context("Failed to set Update MUIVerb")?;
+    //        key.set_value("Icon", &format!("\"{}\"", generator_path))
+    //            .context("Failed to set Update Icon")?;
+    //    }
 
     // Add entry for 'scan' command
     if let Ok((key, _)) = hkcu.create_subkey(
@@ -153,6 +154,23 @@ pub fn add_self_to_context_menu() -> Result<()> {
             .context("Failed to set Refresh MUIVerb")?;
         key.set_value("Icon", &format!("\"{}\"", generator_path))
             .context("Failed to set Refresh Icon")?;
+    }
+    
+    // Add entry for 'uninstall' command
+    if let Ok((key, _)) = hkcu.create_subkey(
+        "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\uninstall\\command",
+    ) {
+        debug!("Creating uninstall command entry");
+        key.set_value("", &format!("\"{}\" -q uninstall", generator_path))
+            .context("Failed to set uninstall command")?;
+    }
+    if let Ok((key, _)) = hkcu.create_subkey(
+        "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\uninstall",
+    ) {
+        key.set_value("MUIVerb", &"Uninstall")
+            .context("Failed to set Uninstall MUIVerb")?;
+        key.set_value("Icon", &format!("\"{}\"", generator_path))
+            .context("Failed to set Uninstall Icon")?;
     }
     info!("Successfully added self to context menu");
     Ok(())
