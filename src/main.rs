@@ -8,7 +8,8 @@ mod darwin;
 #[path = "./linux/dolphin.rs"]
 mod dolphin;
 mod toolbox_state;
-mod update;
+// TODO: Add update feature...
+//mod update;
 #[cfg(target_os = "windows")]
 mod windows;
 #[tokio::main]
@@ -36,20 +37,21 @@ async fn main() -> Result<()> {
     log::info!("Subcommand chosen: {:?}", subcommand);
 
     match subcommand {
-        SubCommands::Update(args) => {
-            log::debug!("Entered Update subcommand with args: {:?}", args);
-            if args.dry_run {
-                log::info!("Dry-run flag enabled for Update subcommand");
-                if args.all {
-                    log::debug!("Fetching all releases");
-                    update::print_all_releases(args.style).await?;
-                } else {
-                    log::debug!("Fetching latest release");
-                    update::print_latest_release(args.style).await?;
-                }
-                return Ok(());
-            }
-        }
+        // TODO: Add update feature...
+        //        SubCommands::Update(args) => {
+        //            log::debug!("Entered Update subcommand with args: {:?}", args);
+        //            if args.dry_run {
+        //                log::info!("Dry-run flag enabled for Update subcommand");
+        //                if args.all {
+        //                    log::debug!("Fetching all releases");
+        //                    update::print_all_releases(args.style).await?;
+        //                } else {
+        //                    log::debug!("Fetching latest release");
+        //                    update::print_latest_release(args.style).await?;
+        //                }
+        //                return Ok(());
+        //            }
+        //        }
         SubCommands::Scan => {
             log::info!("Entered Scan subcommand");
             scan()?;

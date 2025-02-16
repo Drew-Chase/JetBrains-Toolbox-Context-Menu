@@ -24,11 +24,12 @@ pub enum SubCommands {
     #[command(about = "Removes the context menu entries for JetBrains Toolbox installations")]
     /// Removes the context menu entries for JetBrains Toolbox installations.
     Uninstall,
-    #[command(
-        about = "Downloads the latest version of JetBrains Toolbox Context Menu from github"
-    )]
-    /// Downloads the latest version of JetBrains Toolbox Context Menu from GitHub.
-    Update(UpdateArguments),
+    // TODO: Add update feature...
+    //    #[command(
+    //        about = "Downloads the latest version of JetBrains Toolbox Context Menu from github"
+    //    )]
+    //    /// Downloads the latest version of JetBrains Toolbox Context Menu from GitHub.
+    //    Update(UpdateArguments),
 }
 
 #[derive(Debug, Clone, Args)]
