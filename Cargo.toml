@@ -10,12 +10,19 @@ env_logger = "0.11.5"
 clap = { version = "4.5.21", features = ["derive", "color", "env", "usage", "help", "wrap_help", "unicode", "suggestions", "string"] }
 serde = { version = "1.0.215", features = ["derive"] }
 serde_json = { version = "1.0.66" }
-octocrate = { version = "2.0.1", features = ["markdown", "repos"] }
 tokio = { version = "1.41.1", features = ["rt", "rt-multi-thread", "macros"] }
 anyhow = "1.0.95"
-serde_yaml = "0.9.33"
+#octocrate = { version = "2.0.1", features = ["markdown", "repos"] }
+#serde_yaml = "0.9.33"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55.0"
+winapi = { version = "0.3.9", features = ["winuser", "wincon"] }
+atty = "0.2.14"
 
 [target.'cfg(mac)'.dependencies]
+
+[package.metadata.packager]
+before-packaging-command = "cargo build --release"
+product-name = "JetBrains Toolbox Context Menu"
+identifier = "chase.winutils.jetbrains-toolbox-context-menu"
