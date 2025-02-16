@@ -2,6 +2,7 @@
 name = "jetbrains-toolbox-context-menu"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 [dependencies]
 log = "0.4.22"
