@@ -1,6 +1,11 @@
 use crate::toolbox_state::{Tool, ToolboxState};
 use anyhow::{anyhow, bail, Context, Result};
 use log::*;
+use std::ffi::OsStr;
+use std::iter::once;
+use std::os::windows::ffi::OsStrExt;
+use std::ptr::null_mut;
+use winapi::um::winuser::{MessageBoxW, MB_OK};
 use winreg::enums::*;
 use winreg::RegKey;
 
@@ -155,7 +160,7 @@ pub fn add_self_to_context_menu() -> Result<()> {
         key.set_value("Icon", &format!("\"{}\"", generator_path))
             .context("Failed to set Refresh Icon")?;
     }
-    
+
     // Add entry for 'uninstall' command
     if let Ok((key, _)) = hkcu.create_subkey(
         "Software\\Classes\\Directory\\Background\\shell\\JetBrainsToolbox\\shell\\uninstall\\command",
@@ -224,4 +229,32 @@ pub fn remove_existing_context_menu() -> Result<()> {
     }
     debug!("Successfully removed existing context menu entries");
     Ok(())
+}
+
+pub fn show_installed_message() {
+    unsafe {
+        MessageBoxW(null_mut(), to_os_str("The jetbrains context menu has been installed and setup successfully.  You can now right-click and view the context menu."), to_os_str("JetBrains Toolbox Context Menu"), MB_OK);
+    }
+}
+
+pub fn to_os_str(msg: &str) -> *const u16 {
+    OsStr::new(msg)
+        .encode_wide()
+        .chain(once(0))
+        .collect::<Vec<u16>>()
+        .as_ptr()
+}
+
+use winapi::um::wincon::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
+
+pub fn attach_console() {
+    unsafe {
+        AttachConsole(ATTACH_PARENT_PROCESS);
+    }
+}
+
+pub fn detach_console() {
+    unsafe {
+        FreeConsole();
+    }
 }
