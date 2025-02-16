@@ -1,6 +1,6 @@
 use clap::{Args, ColorChoice, Parser, ValueEnum};
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Copy, Clone)]
 #[command(about, color = ColorChoice::Auto, name = "JetBrains Toolbox Context Menu Generator", version, propagate_version = true, author)]
 pub struct JetbrainsToolBoxContextArguments {
     #[command(subcommand)]
@@ -16,7 +16,7 @@ pub struct JetbrainsToolBoxContextArguments {
     pub verbose: bool,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Copy, Clone)]
 pub enum SubCommands {
     #[command(about = "Scan a directory for JetBrains Toolbox installations")]
     /// Scans a directory for JetBrains Toolbox installations and adds context menu entries for them.
