@@ -185,10 +185,9 @@ fn create_context_menu_item(key: &RegKey, tools: &[Tool]) -> Result<()> {
     debug!("Creating context menu items for {} tools", tools.len());
     if let Ok((shell_key, _)) = key.create_subkey("shell") {
         for tool in tools {
-            let exe_path = format!("{}/{}", tool.install_location, tool.launch_command);
             debug!(
                 "Creating menu item for {} at {}",
-                tool.display_name, exe_path
+                tool.display_name, tool.launch_command
             );
 
             if let Ok((sub_key, _)) = shell_key.create_subkey(&tool.display_name) {
@@ -196,14 +195,14 @@ fn create_context_menu_item(key: &RegKey, tools: &[Tool]) -> Result<()> {
                     .set_value("MUIVerb", &tool.display_name)
                     .context(format!("Failed to set MUIVerb for {}", tool.display_name))?;
                 sub_key
-                    .set_value("Icon", &format!("\"{}\"", exe_path))
+                    .set_value("Icon", &format!("\"{}\"", tool.launch_command))
                     .context(format!("Failed to set Icon for {}", tool.display_name))?;
             }
             if let Ok((sub_key, _)) =
                 shell_key.create_subkey(format!("{}\\command", tool.display_name))
             {
                 sub_key
-                    .set_value("", &format!("\"{}\" \"%V\"", exe_path))
+                    .set_value("", &format!("\"{}\" \"%V\"", tool.launch_command))
                     .context(format!("Failed to set command for {}", tool.display_name))?;
                 info!("\t- Added context menu item for {}", tool.display_name);
             }
