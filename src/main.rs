@@ -3,7 +3,7 @@
 use crate::arguments::{JetbrainsToolBoxContextArguments, SubCommands};
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use log::error;
+use log::*;
 
 mod arguments;
 #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -27,43 +27,44 @@ async fn main() -> Result<()> {
     }
 
     let args = JetbrainsToolBoxContextArguments::parse();
-    log::debug!("Parsed command line arguments: {:?}", args);
+    debug!("Parsed command line arguments: {:?}", args);
 
+    let mut logger = pretty_env_logger::env_logger::builder();
     if args.quiet {
-        log::trace!("Quiet mode enabled; setting logging to error level");
-        std::env::set_var("RUST_LOG", "error");
+        logger.filter_level(LevelFilter::Error);       
+        trace!("Quiet mode enabled; setting logging to error level");
     } else if args.verbose {
-        log::trace!("Verbose mode enabled; setting logging to trace level");
-        std::env::set_var("RUST_LOG", "trace");
+        logger.filter_level(LevelFilter::Trace);       
+        trace!("Verbose mode enabled; setting logging to trace level");
     } else {
-        log::trace!("Default mode; setting logging to info level");
-        std::env::set_var("RUST_LOG", "info");
+        logger.filter_level(LevelFilter::Info);       
+        trace!("Default mode; setting logging to info level");
     }
+    logger.format_timestamp(None).init();   
 
-    env_logger::init();
-    log::info!("Logger initialized");
+    info!("Logger initialized");
 
     let subcommand = args.subcommands.unwrap_or(SubCommands::Scan);
-    log::info!("Subcommand chosen: {:?}", subcommand);
+    info!("Subcommand chosen: {:?}", subcommand);
 
     match subcommand {
         // TODO: Add update feature...
         //        SubCommands::Update(args) => {
-        //            log::debug!("Entered Update subcommand with args: {:?}", args);
+        //            debug!("Entered Update subcommand with args: {:?}", args);
         //            if args.dry_run {
-        //                log::info!("Dry-run flag enabled for Update subcommand");
+        //                info!("Dry-run flag enabled for Update subcommand");
         //                if args.all {
-        //                    log::debug!("Fetching all releases");
+        //                    debug!("Fetching all releases");
         //                    update::print_all_releases(args.style).await?;
         //                } else {
-        //                    log::debug!("Fetching latest release");
+        //                    debug!("Fetching latest release");
         //                    update::print_latest_release(args.style).await?;
         //                }
         //                return Ok(());
         //            }
         //        }
         SubCommands::Scan => {
-            log::info!("Entered Scan subcommand");
+            info!("Entered Scan subcommand");
             scan()?;
             if args.subcommands.is_none() {
                 #[cfg(target_os = "windows")]
@@ -71,10 +72,10 @@ async fn main() -> Result<()> {
             }
         }
         SubCommands::Uninstall => {
-            log::info!("Entered Uninstall subcommand");
+            info!("Entered Uninstall subcommand");
             #[cfg(target_os = "windows")]
             {
-                log::debug!("Attempting to remove existing context menu entries on Windows");
+                debug!("Attempting to remove existing context menu entries on Windows");
                 windows::remove_existing_context_menu()
                     .context("Failed to remove existing context menu entries")?;
                 let current_exe =
@@ -87,16 +88,16 @@ async fn main() -> Result<()> {
                     .join("uninstall.exe")
                     .to_string_lossy()
                     .to_string();
-                log::debug!("Uninstall executable path: {}", uninstall_exe);
+                debug!("Uninstall executable path: {}", uninstall_exe);
                 if !std::path::Path::new(&uninstall_exe).exists() {
                     error!("uninstall.exe not found at {}", uninstall_exe);
                 } else {
-                    // Start the uninstall process detached from the current process
+                    // Start the uninstallation process detached from the current process
                     let mut command = std::process::Command::new(&uninstall_exe);
                     command
                         .spawn()
                         .context("Failed to start uninstall process in detached mode")?;
-                    log::info!("Uninstall process started");
+                    info!("Uninstall process started");
                 }
             }
         }
@@ -107,22 +108,22 @@ async fn main() -> Result<()> {
     Ok(())
 }
 fn scan() -> Result<()> {
-    log::debug!("Starting scan function");
+    debug!("Starting scan function");
     #[cfg(any(target_os = "macos", target_os = "ios"))]
     {
-        log::trace!("Calling Darwin specific scan");
+        trace!("Calling Darwin specific scan");
         darwin::scan();
     }
     #[cfg(target_os = "windows")]
     {
-        log::trace!("Calling Windows scan");
+        trace!("Calling Windows scan");
         windows::scan().context("Failed to scan for context menu entries on Windows")?;
     }
     #[cfg(target_os = "linux")]
     {
-        log::trace!("Calling Linux scan");
+        trace!("Calling Linux scan");
         dolphin::initialize().context("Failed to initialize context menu entries on Linux")?;
     }
-    log::debug!("Scan function completed");
+    debug!("Scan function completed");
     Ok(())
 }
