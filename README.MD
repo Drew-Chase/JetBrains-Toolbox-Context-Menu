@@ -43,29 +43,39 @@ jetbrains-toolbox-context-menu --help
 
 ### Command Line Options
 
+#### Global Options
 - `--quiet`, `-q`: Suppress all output except errors and formatted responses
 - `--verbose`, `-v`: Output additional debugging information
-- `--path`, `-p`: Specify custom installation directory (platform-specific defaults):
-    - Windows: `C:\Program Files`
-    - macOS: `/Applications`
-    - Linux: `/usr/bin`
+
+#### Subcommands
+- `scan`: Scans for JetBrains Toolbox installations and adds context menu entries
+- `uninstall`: Removes the context menu entries for JetBrains Toolbox installations
+
+#### Future Options (Implementation in Progress)
+- `update`: Downloads the latest version from GitHub
+  - `--force`, `-f`: Force download even if versions match
+  - `--dry-run`: Show version info without downloading
+  - `--all`: Output all releases (requires --dry-run)
+  - `--style`, `-s`: Output format (JSON, YAML, PlainText)
 
 ## Platform Support
 
 - Windows: Full support with registry integration
-- macOS: Supported
-- Linux: Supported (Dolphin integration)
+- macOS: Not Supported Yet
+- Linux: Not Supported Yet (Dolphin integration)
 
 ## Dependencies
 
 - anyhow 1.0.95
-- tokio 1.41.1
+- tokio 1.43.1
 - clap 4.5.21
-- serde_json 1.0.133
+- serde_json 1.0.66
 - winreg 0.55.0 (Windows only)
-- env_logger 0.11.5
+- pretty_env_logger 0.5.0
 - serde 1.0.215
 - log 0.4.22
+- winapi 0.3.9 (Windows only)
+- atty 0.2.14 (Windows only)
 ## Screenshots
 ![screenshot.png](resources/screenshot.png)
 
@@ -90,5 +100,5 @@ jetbrains-toolbox-context-menu --verbose scan
 
 ## Future Plans
 
-- Update feature for downloading the latest version from GitHub (planned)
-- Additional output format options (JSON, YAML, Plain Text)
+- Update feature for downloading the latest version from GitHub (implementation in progress)
+- Additional output format options (JSON, YAML, Plain Text) (implementation in progress)
