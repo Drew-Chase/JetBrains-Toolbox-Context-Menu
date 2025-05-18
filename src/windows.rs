@@ -4,6 +4,7 @@ use log::*;
 use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
+use std::path::PathBuf;
 use std::ptr::null_mut;
 use winapi::um::winuser::{MessageBoxW, MB_OK};
 use winreg::enums::*;
@@ -15,21 +16,20 @@ pub(crate) fn scan() -> Result<()> {
     match get_jetbrains_toolbox_path() {
         Some(toolbox_path) => {
             debug!("Found Toolbox path: {}", toolbox_path);
-            let toolbox_executable_path = std::path::Path::new(&toolbox_path)
-                .join("jetbrains-toolbox.exe")
-                .to_string_lossy()
-                .to_string();
+            let toolbox_executable_path = std::path::Path::new(&toolbox_path);
 
-            if !std::path::Path::new(&toolbox_executable_path).exists() {
+            if !toolbox_executable_path.exists() {
                 error!(
                     "jetbrains-toolbox.exe not found at {}",
-                    toolbox_executable_path
+                    toolbox_path
                 );
                 return Ok(());
             }
-            debug!("Found Toolbox executable at {}", toolbox_executable_path);
+            debug!("Found Toolbox executable at {:?}", toolbox_executable_path);
 
-            let state_file_path = std::path::Path::new(&toolbox_path)
+            let state_file_path = toolbox_executable_path
+                .parent()
+                .ok_or_else(|| anyhow!("Failed to locate parent directory for {}", toolbox_path))?
                 .parent()
                 .ok_or_else(|| anyhow!("Failed to locate parent directory for {}", toolbox_path))?
                 .join("state.json")
@@ -47,7 +47,7 @@ pub(crate) fn scan() -> Result<()> {
             match get_tools(&state_file_path) {
                 Ok(tools) => {
                     debug!("Found {} tools in state file", tools.len());
-                    create_context_menu(&toolbox_executable_path, &tools)?;
+                    create_context_menu(&toolbox_path, &tools)?;
                 }
                 Err(e) => error!("Error retrieving tools: {}", e),
             }
@@ -63,15 +63,55 @@ pub(crate) fn scan() -> Result<()> {
 }
 
 fn get_jetbrains_toolbox_path() -> Option<String> {
+    find_jetbrains_toolbox_path_in_appdata()
+        .or_else(find_jetbrains_toolbox_path_in_uninstall_registry)
+        .or_else(find_jetbrains_toolbox_path_in_old_registry)
+        .or_else(|| {
+            error!("JetBrains Toolbox not found!");
+            None
+        })
+}
+
+fn find_jetbrains_toolbox_path_in_appdata() -> Option<String> {
+    debug!("Attempting to find Toolbox in LocalAppData");
+    let appdata = std::env::var("LOCALAPPDATA").ok()?;
+    let toolbox_path =
+        std::path::Path::new(&appdata).join("JetBrains/Toolbox/bin/jetbrains-toolbox.exe");
+    if toolbox_path.exists() {
+        return Some(toolbox_path.to_string_lossy().to_string());
+    }
+    None
+}
+
+fn find_jetbrains_toolbox_path_in_uninstall_registry() -> Option<String> {
     debug!("Attempting to read Toolbox path from registry");
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    if let Ok(toolbox_key) = hkcu.open_subkey("SOFTWARE\\JetBrains\\Toolbox") {
-        if let Ok(path) = toolbox_key.get_value::<String, _>("") {
-            debug!("Successfully read Toolbox path from registry: {}", path);
+    if let Ok(toolbox_key) =
+        hkcu.open_subkey(r#"Software\Microsoft\Windows\CurrentVersion\Uninstall\Toolbox"#)
+    {
+        if let Ok(path) = toolbox_key.get_value::<String, _>("DisplayIcon") {
+            debug!(
+                "Successfully read Toolbox path from uninstall registry: {}",
+                path
+            );
             return Some(path);
         }
     }
-    warn!("Failed to read Toolbox path from registry");
+    warn!("Failed to read Toolbox path from uninstall registry");
+    None
+}
+
+fn find_jetbrains_toolbox_path_in_old_registry() -> Option<String> {
+    debug!("Attempting to read Toolbox path from registry");
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(toolbox_key) = hkcu.open_subkey(r#"SOFTWARE\JetBrains\Toolbox"#) {
+        if let Ok(path) = toolbox_key.get_value::<String, _>("") {
+            debug!("Successfully read Toolbox path from registry: {}", path);
+            let path = PathBuf::from(path).join("jetbrains-toolbox.exe").to_string_lossy().to_string();
+            return Some(path);
+        }
+    }
+    warn!("Failed to read Toolbox path from pre-2.0 registry");
     None
 }
 
